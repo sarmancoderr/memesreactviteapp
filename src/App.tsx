@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react"
-import { IMG_MEMES_PASSWORD, IMG_MEMES_USERNAME, JOKES_HEADERS, URL_JOKES, URL_MEMES } from "./config"
+import { Formik } from "formik";
+import { useEffect, useState } from "react";
+import { IMG_MEMES_PASSWORD, IMG_MEMES_USERNAME, JOKES_HEADERS, URL_JOKES, URL_MEMES } from "./config";
 
 function App() {
   const [punchline, setPunchline] = useState('')
@@ -25,7 +26,7 @@ function App() {
 
   }
 
-  const retrieveMeme = async () => {
+  const retrieveMeme = async (punchline: string, setup: string) => {
     if (!punchline) return;
 
     const params = new URLSearchParams({
@@ -42,13 +43,11 @@ function App() {
 
     const data = await result.json()
     setImage(data.data.url)
-
-    console.log(data)
   }
 
   useEffect(() => {retrieveJoke()}, [])
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {retrieveMeme()}, [punchline])
+  useEffect(() => {retrieveMeme(punchline, setup)}, [])
 
   return (
     <>
@@ -56,6 +55,21 @@ function App() {
         <button onClick={() => {retrieveJoke()}}>Regenerate joke</button>
       </header>
       <section>
+        <Formik initialValues={{punchline, setup}} onSubmit={async (values, {setSubmitting}) => {
+          setSubmitting(true)
+          setPunchline(values.punchline)
+          setSetup(values.setup)
+          await retrieveMeme(values.punchline, values.setup)
+          setSubmitting(false)
+        }}>
+          {({handleSubmit, handleChange, isSubmitting}) => (
+            <form onSubmit={handleSubmit}>
+              <input type="text" name="punchline" placeholder="punchline" onChange={handleChange} />
+              <input type="text" name="setup" placeholder="setup" onChange={handleChange} />
+              <button type="submit" disabled={isSubmitting}>Generar meme</button>
+            </form>
+          )}
+        </Formik>
         <h2>{punchline}</h2>
         <p>{setup}</p>
         {image && <figure>
